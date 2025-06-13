@@ -1,4 +1,169 @@
 ---
-title: "homework_1"
+title: "Homework 1"
 output: html_document
 ---
+
+This is the Rmarkdown file for homework week 1.
+Camilla Brunet, Francesca Frisoni, Elisa Perinot.
+
+### Loaded libraries here : rethinking
+
+```{r,library, eval=T, include=FALSE}
+
+library(rethinking)
+```
+
+### 1ST PROBLEM
+Suppose the globe tossing data (Lecture 2, Chapter 2) had turned out to be 
+3 water and 11 land. Construct the posterior distribution.
+
+
+First trial with sequence of 11.
+```{r,1problem1, eval=T}
+# pag 40
+# define grid
+p_grid1 <- seq (from=0, to=1, length.out=11)
+# define prior
+prior1 <- rep(1,11)
+# compute likelihood at each value in grid
+likelihood1 <- dbinom(3, size=14, prob=p_grid1)
+# product of likelihood and prior
+unstd.posterior1 <- likelihood1 * prior1
+# standardize the posterior, so it sums to 1
+posterior1 <- unstd.posterior1 / sum(unstd.posterior1)
+
+# posterior to look at the dataframe
+plot(p_grid1, posterior1, type="b", xlab="prob of water", ylab="posterior prob")
+mtext("11 points")
+```
+
+\  
+Second trail with 100.
+```{r,1problem2, eval=T}
+
+p_grid2 <- seq (from=0, to=1, length.out=100)
+prior2 <- rep(1,100)
+likelihood2 <- dbinom(3, size=14, prob=p_grid2)
+unstd.posterior2 <- likelihood2 * prior2
+posterior2 <- unstd.posterior2 / sum(unstd.posterior2)
+
+plot(p_grid2, posterior2, type="b", xlab="prob of water", ylab="posterior prob")
+mtext("100 points")
+
+```
+
+\  
+Last trail with 1000.
+```{r,1problem3, eval=T}
+
+p_grid3 <- seq (from=0, to=1, length.out=1000)
+prior3 <- rep(1,1000)
+likelihood3 <- dbinom(3, size=14, prob=p_grid3)
+unstd.posterior3 <- likelihood3 * prior3
+posterior3 <- unstd.posterior3 / sum(unstd.posterior3)
+
+plot(p_grid3, posterior3, type="b", xlab="prob of water", ylab="posterior prob")
+mtext("1000 points")
+```
+
+#### SOLUTION
+
+```{r,1problemsol, eval=T}
+compute_posterior <- function( W , L , poss=c(0,0.25,0.5,0.75,1) ) {
+ways <- sapply( poss , function(q) q^W * (1-q)^L )
+post <- ways/sum(ways)
+print(data.frame( poss , ways , post=round(post,3) ))
+plot(post, type="b", xlab="prob of water", ylab="posterior prob")
+mtext("11 points")
+}
+compute_posterior( 3 , 11 , poss=seq(from=0,to=1,len=11))
+
+```
+WELL DONE!
+
+
+
+### 2ND PROBLEM
+Using the posterior distribution from 1, compute the posterior predictive
+distribution for the next 5 tosses of the same globe. I recommend you use
+the sampling method.
+
+```{r,2problem, eval=T}
+# pag 52
+samples3 <- sample(p_grid3, prob=posterior3, size = 10000, replace = T)
+plot(samples3)
+dens(samples3)
+
+# pag 65-66
+w <- rbinom(10000, size=5, prob=samples3)
+simplehist(w) #plot(table(w)) other way to plot the w
+
+```
+
+
+### SOLUTION
+```{r,2problemsol, eval=T}
+p_samples <- rbeta(1e4,3+1,11+1)
+W_sim <- rbinom(1e4,size=5,p=p_samples)
+plot(table(W_sim))
+
+```
+WELL DONE!
+
+
+
+### ADDITIONAL
+2E1-2E4 on page 46 of SR2023 - not completed
+
+```{r,1esbook, eval=F}
+
+```
+
+3E1-3E7 pag 69
+
+```{r,2esbook, eval=T}
+# distribution given by the book
+p_grid <- seq (from=0, to=1, length.out=1000)
+prior <- rep(1,1000)
+likelihood <- dbinom(6, size=9, prob=p_grid)
+unstd.posterior <- likelihood * prior
+posterior <- unstd.posterior / sum(unstd.posterior)
+set.seed(100)
+samples <- sample(p_grid, prob=posterior, size = 10000, replace = T)
+
+# 3e1
+# how much post prob under p=0.2
+print(quantile(samples, 0.2))
+
+# 3e2
+# how much post prob under p=0.8
+print(quantile(samples, 0.8))
+
+# 3e3
+# how much post prob between p=0.2 and 0.8 
+print(quantile(samples, c(0.2,0.8)))
+
+# 3e4
+# 20% of the post prob lies below which value of p
+print(sum(posterior[p_grid<0.2]))
+
+plot(posterior, type="b")
+abline(h=sum(posterior[p_grid<0.2]))
+
+# 3e5
+# 20% of the post prob lies above which value of p
+print(sum(posterior[p_grid>0.2]))
+
+# 3e6
+# which values of p contain the narrowest interval equal to 66% of the post prob
+print(HPDI(samples, prob = 0.66))
+
+# 3e7
+# not completed
+
+
+```
+
+
+
+
