@@ -1,0 +1,118 @@
+---
+title: "Homework 2"
+output: html_document
+---
+
+
+This is the Rmarkdown file for homework week 2.
+Camilla Brunet, Francesca Frisoni, Elisa Perinot.
+
+### Loaded libraries here : rethinking
+
+```{r,library, eval=T, include=FALSE}
+
+library(rethinking)
+```
+
+### 1ST PROBLEM
+From the Howell1 dataset, consider only the people younger than 13 years
+old. Estimate the causal association between age and weight. Assume that
+age influences weight through two paths. First, age influences height, and
+height influences weight. Second, age directly influences weight through age-
+related changes in muscle growth and body proportions.
+Draw the DAG that represents these causal relationships. And then write
+a generative simulation that takes age as an input and simulates height and
+weight, obeying the relationships in the DAG.
+
+```{r,1problem1, eval=T}
+data("Howell1")
+# filter on age
+d<- Howell1[Howell1$age<13,]
+
+# plot distribution of weight
+dens(d$weight)
+
+# pag 82
+mean(d$weight) # 14 kg
+
+# priors for weight
+sample_mu <- rnorm(1e4, 20, 15)
+sample_sigma <- runif(1e4, 0, 15)
+prior_w <- rnorm(1e4, sample_mu, sample_sigma)
+dens(prior_w)
+  
+# Remove negative weights
+prior_w_pos <- prior_w[prior_w > 0]
+dens(prior_w_pos)
+
+
+
+
+```
+
+\  
+
+#### SOLUTION
+
+```{r,1problemsol, eval=T}
+
+# optimal solution by Perplexity
+# Load data and subset to children under 13
+library(rethinking)
+data(Howell1)
+d <- subset(Howell1, age < 13)
+
+# Fit models to estimate parameters
+height_model <- lm(height ~ age, data = d)
+weight_model <- lm(weight ~ height + age, data = d)
+
+# Extract coefficients and residual SDs
+alpha_h <- coef(height_model)[1]  # Intercept for height
+beta_ah <- coef(height_model)[2]  # Slope (age → height)
+sigma_h <- sd(residuals(height_model))
+
+alpha_w <- coef(weight_model)[1]  # Intercept for weight
+beta_hw <- coef(weight_model)[2]  # Slope (height → weight)
+beta_aw <- coef(weight_model)[3]  # Slope (age → weight, direct)
+sigma_w <- sd(residuals(weight_model))
+
+# Simulation function
+simulate_child <- function(age) {
+  # Simulate height from age
+  mu_height <- alpha_h + beta_ah * age
+  height <- rnorm(length(age), mu_height, sigma_h)
+  
+  # Simulate weight from height and age
+  mu_weight <- alpha_w + beta_hw * height + beta_aw * age
+  weight <- rnorm(length(age), mu_weight, sigma_w)
+  
+  return(data.frame(age = age, height = height, weight = weight))
+}
+
+# Example usage: Simulate for ages 5, 8, 11
+simulate_child(c(5, 8, 11))
+
+
+
+```
+WELL DONE!
+
+
+
+### 2ND PROBLEM
+Estimate the total causal effect of each year of growth on weight.
+
+```{r,2problem, eval=T}
+
+
+```
+
+
+### SOLUTION
+```{r,2problemsol, eval=T}
+
+```
+WELL DONE!
+
+
+
